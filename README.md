@@ -20,6 +20,15 @@ Requisito: Node.js 22+.
 O banco local fica em `prisma/dev.db` (configurado em `.env.example`). Faça
 backup desse arquivo e mantenha-o fora do controle de versão.
 
+Os comandos só confirmam o registro depois que o Prisma conclui a gravação no
+SQLite. A migration cria o banco em arquivo, não em memória; portanto os dados
+continuam disponíveis após reiniciar ou encerrar abruptamente o processo,
+desde que o arquivo permaneça em armazenamento persistente. Em hospedagens
+com disco efêmero, monte um volume persistente e mantenha backups.
+
+Para verificar os testes unitários e a persistência após uma saída abrupta:
+`npm test`.
+
 Os dados pessoais são identificados pelo ID do usuário no Telegram. O bot deve
 ser usado em conversa privada; antes de produção, defina política de retenção,
 exportação e exclusão de registros. Não publique o token do bot nem o arquivo
