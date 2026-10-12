@@ -1,0 +1,36 @@
+# Bot de registro de consumo
+
+Bot Telegram em TypeScript com grammY. Os comandos registram consumos individuais
+em SQLite usando Prisma:
+
+- `/cafeina <mg>` — quantidade inteira em miligramas;
+- `/agua <ml>` — quantidade inteira em mililitros;
+- `/nicotina <unidades>` — quantidade inteira de cigarros/unidades.
+
+## Desenvolvimento local
+
+Requisito: Node.js 22+.
+
+1. Crie um bot pelo `@BotFather` e copie o token.
+2. Copie `.env.example` para `.env` e preencha `BOT_TOKEN`.
+3. Instale dependências: `npm install`.
+4. Gere e aplique a migration inicial: `npm run db:migrate -- --name init`.
+5. Rode o bot: `npm run dev`.
+
+O banco local fica em `prisma/dev.db` (configurado em `.env.example`). Faça
+backup desse arquivo e mantenha-o fora do controle de versão.
+
+Os dados pessoais são identificados pelo ID do usuário no Telegram. O bot deve
+ser usado em conversa privada; antes de produção, defina política de retenção,
+exportação e exclusão de registros. Não publique o token do bot nem o arquivo
+`.env`.
+
+O modo local usa long polling. SQLite é uma boa opção para este MVP individual,
+com baixo volume e uma única instância do bot. Para deploy, use armazenamento
+persistente para o arquivo do banco e não execute múltiplas instâncias que
+escrevam nele simultaneamente. Se houver concorrência elevada ou necessidade de
+escalar horizontalmente, reavalie PostgreSQL. Em produção, configure webhook
+HTTPS, backups e monitoramento de erros.
+
+Para aplicar migrations já versionadas em produção, execute
+`npm run db:deploy` antes de iniciar o bot.

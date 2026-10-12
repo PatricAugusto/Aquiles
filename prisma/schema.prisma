@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ConsumptionLog {
+  id             Int      @id @default(autoincrement())
+  telegramUserId String   @map("telegram_user_id")
+  type           String
+  amount         Int
+  unit           String
+  consumedAt     DateTime @default(now()) @map("consumed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([telegramUserId, consumedAt])
+  @@map("consumption_logs")
+}
