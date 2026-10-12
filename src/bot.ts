@@ -20,7 +20,7 @@ bot.command("start", async (ctx) => {
 bot.command("cafeina", (ctx) => recordFromCommand(ctx, "cafeina"));
 bot.command("agua", (ctx) => recordFromCommand(ctx, "agua"));
 bot.command("nicotina", (ctx) => recordFromCommand(ctx, "nicotina"));
-bot.command("historico", showHistory);
+bot.command("historico", (ctx) => showHistory(ctx));
 
 bot.catch(({ error, ctx }) => {
   console.error(`Falha ao processar update ${ctx.update.update_id}:`, error);

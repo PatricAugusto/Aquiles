@@ -27,8 +27,13 @@ continuam disponíveis após reiniciar ou encerrar abruptamente o processo,
 desde que o arquivo permaneça em armazenamento persistente. Em hospedagens
 com disco efêmero, monte um volume persistente e mantenha backups.
 
-Para verificar os testes unitários e a persistência após uma saída abrupta:
-`npm test`.
+Para rodar os testes unitários e de segurança:
+`npm test`. Para relatório de cobertura com limites mínimos de 90% de linhas e
+80% de branches: `npm run test:coverage`. Para auditar todas as dependências,
+incluindo as de desenvolvimento: `npm run security:check`.
+
+GitHub Actions repete type-check, testes, cobertura, build e auditoria em Node
+22/24 e Windows/Linux a cada push e pull request.
 
 Os dados pessoais são identificados pelo ID do usuário no Telegram. O bot deve
 ser usado em conversa privada; antes de produção, defina política de retenção,

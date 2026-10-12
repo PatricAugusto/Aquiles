@@ -23,7 +23,7 @@ test("history is private to its user, newest first, and limited to ten records",
     );
     assert.equal(migration.status, 0, migration.stderr);
 
-    const userId = `history-test-${randomUUID()}`;
+    const userId = `history-test-${randomUUID()}' OR 1=1 --`;
     const otherUserId = `other-user-${randomUUID()}`;
     await prisma.consumptionLog.createMany({
       data: [
@@ -63,4 +63,21 @@ test("history is private to its user, newest first, and limited to ten records",
 test("formats an empty history with guidance", () => {
   assert.match(formatHistory([]), /Ainda nao ha registros/);
   assert.match(formatHistory([]), /\/historico|\/agua/);
+});
+
+test("formats history entries without exposing the Telegram user ID", () => {
+  const message = formatHistory([
+    {
+      id: 1,
+      telegramUserId: "private-user-id",
+      type: "cafeina",
+      amount: 80,
+      unit: "mg",
+      consumedAt: new Date("2026-10-12T12:00:00.000Z"),
+      createdAt: new Date("2026-10-12T12:00:00.000Z"),
+    },
+  ]);
+
+  assert.match(message, /Cafeína: 80 mg/);
+  assert.doesNotMatch(message, /private-user-id/);
 });

@@ -1,7 +1,23 @@
-import type { Context } from "grammy";
 import { db } from "./db/index.js";
 import type { ConsumptionKind } from "./db/schema.js";
 import { parseAmount } from "./amount.js";
+import { isPrivateChatType } from "./privacy.js";
+
+export interface ConsumptionCommandContext {
+  chat?: { type: string };
+  from?: { id: number };
+  match?: string | RegExpMatchArray;
+  reply(text: string): Promise<unknown>;
+}
+
+export interface ConsumptionEntry {
+  telegramUserId: string;
+  type: ConsumptionKind;
+  amount: number;
+  unit: string;
+}
+
+export type SaveConsumption = (entry: ConsumptionEntry) => Promise<unknown>;
 
 const units: Record<ConsumptionKind, string> = {
   cafeina: "mg",
@@ -10,14 +26,15 @@ const units: Record<ConsumptionKind, string> = {
 };
 
 export async function recordFromCommand(
-  ctx: Context,
+  ctx: ConsumptionCommandContext,
   kind: ConsumptionKind,
+  save: SaveConsumption = (data) => db.consumptionLog.create({ data }),
 ): Promise<void> {
   const chat = ctx.chat;
   if (!chat) {
     throw new Error("Telegram chat is missing from the command context");
   }
-  if (chat.type !== "private") {
+  if (!isPrivateChatType(chat.type)) {
     await ctx.reply("Por privacidade, use este comando em uma conversa privada com o bot.");
     return;
   }
@@ -39,13 +56,11 @@ export async function recordFromCommand(
   }
 
   try {
-    await db.consumptionLog.create({
-      data: {
-        telegramUserId: String(telegramUserId),
-        type: kind,
-        amount,
-        unit: units[kind],
-      },
+    await save({
+      telegramUserId: String(telegramUserId),
+      type: kind,
+      amount,
+      unit: units[kind],
     });
   } catch (error) {
     console.error("Falha ao persistir registro de consumo:", error);

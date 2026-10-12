@@ -1,8 +1,16 @@
 import type { ConsumptionLog, PrismaClient } from "@prisma/client";
-import type { Context } from "grammy";
 import { db } from "./db/index.js";
+import { isPrivateChatType } from "./privacy.js";
 
 export const HISTORY_LIMIT = 10;
+
+export interface HistoryCommandContext {
+  chat?: { type: string };
+  from?: { id: number };
+  reply(text: string): Promise<unknown>;
+}
+
+type FindHistory = (telegramUserId: string) => Promise<ConsumptionLog[]>;
 
 const consumptionLabels: Record<string, string> = {
   cafeina: "Cafeína",
@@ -44,12 +52,16 @@ export function formatHistory(logs: readonly ConsumptionLog[]): string {
   return `Historico recente (ultimos ${HISTORY_LIMIT} registros):\n\n${entries.join("\n")}`;
 }
 
-export async function showHistory(ctx: Context): Promise<void> {
+export async function showHistory(
+  ctx: HistoryCommandContext,
+  findHistory: FindHistory = (telegramUserId) =>
+    getRecentConsumptionLogs(db, telegramUserId),
+): Promise<void> {
   const chat = ctx.chat;
   if (!chat) {
     throw new Error("Telegram chat is missing from the command context");
   }
-  if (chat.type !== "private") {
+  if (!isPrivateChatType(chat.type)) {
     await ctx.reply("Por privacidade, consulte o historico em uma conversa privada com o bot.");
     return;
   }
@@ -60,7 +72,7 @@ export async function showHistory(ctx: Context): Promise<void> {
   }
 
   try {
-    const logs = await getRecentConsumptionLogs(db, String(telegramUserId));
+    const logs = await findHistory(String(telegramUserId));
     await ctx.reply(formatHistory(logs));
   } catch (error) {
     console.error("Falha ao consultar historico de consumo:", error);
