@@ -1,6 +1,10 @@
-import type { ConsumptionLog, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { db } from "./db/index.js";
 import { isPrivateChatType } from "./privacy.js";
+
+type ConsumptionLog = Awaited<
+  ReturnType<PrismaClient["consumptionLog"]["findMany"]>
+>[number];
 
 export const HISTORY_LIMIT = 10;
 export const HISTORY_TIME_ZONE = "America/Sao_Paulo";

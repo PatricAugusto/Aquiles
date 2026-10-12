@@ -19,6 +19,10 @@ Requisito: Node.js 22+.
 4. Gere e aplique a migration inicial: `npm run db:migrate -- --name init`.
 5. Rode o bot: `npm run dev`.
 
+O Prisma Client e seus tipos são gerados automaticamente após `npm install`.
+Se o editor ainda marcar tipos Prisma como ausentes, execute
+`npm run db:generate` e reinicie o servidor TypeScript do editor.
+
 O banco local fica em `prisma/dev.db` (configurado em `.env.example`). Faça
 backup desse arquivo e mantenha-o fora do controle de versão.
 
