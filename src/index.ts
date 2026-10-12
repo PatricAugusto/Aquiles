@@ -6,6 +6,7 @@ await bot.api.setMyCommands([
   { command: "cafeina", description: "Registrar cafeina em mg" },
   { command: "agua", description: "Registrar agua em ml" },
   { command: "nicotina", description: "Registrar nicotina em unidades" },
+  { command: "historico", description: "Ver os ultimos 10 registros" },
 ]);
 
 async function shutdown(signal: string): Promise<void> {
