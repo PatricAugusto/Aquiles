@@ -6,7 +6,8 @@ em SQLite usando Prisma:
 - `/cafeina <mg>` — quantidade inteira em miligramas;
 - `/agua <ml>` — quantidade inteira em mililitros;
 - `/nicotina <unidades>` — quantidade inteira de cigarros/unidades;
-- `/historico` — mostra os 10 registros mais recentes do proprio usuario.
+- `/historico` — mostra a soma do dia atual (horario de Brasilia) por categoria
+  e os 10 registros mais recentes do proprio usuario.
 
 ## Desenvolvimento local
 

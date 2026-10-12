@@ -12,7 +12,7 @@ bot.command("start", async (ctx) => {
       "/cafeina <mg>",
       "/agua <ml>",
       "/nicotina <unidades>",
-      "/historico — ver os ultimos 10 registros",
+      "/historico — resumo do dia e historico recente",
     ].join("\n"),
   );
 });

@@ -2,8 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ConsumptionCommandContext } from "./consumption.js";
 import { recordFromCommand } from "./consumption.js";
-import type { HistoryCommandContext } from "./history.js";
+import type { HistoryCommandContext, HistoryDataSource } from "./history.js";
 import { showHistory } from "./history.js";
+
+function makeHistoryDataSource(
+  overrides: Partial<HistoryDataSource> = {},
+): HistoryDataSource {
+  return {
+    findHistory: async () => [],
+    getDailyTotals: async () => ({ cafeina: 0, agua: 0, nicotina: 0 }),
+    ...overrides,
+  };
+}
 
 function makeConsumptionContext(
   overrides: Partial<ConsumptionCommandContext> = {},
@@ -120,10 +130,17 @@ test("missing Telegram identity data is rejected before persistence", async () =
 test("history from a group is rejected before looking up records", async () => {
   const { context, replies } = makeHistoryContext({}, "supergroup");
   let queried = false;
-  await showHistory(context, async () => {
-    queried = true;
-    return [];
+  const dataSource = makeHistoryDataSource({
+    findHistory: async () => {
+      queried = true;
+      return [];
+    },
+    getDailyTotals: async () => {
+      queried = true;
+      return { cafeina: 0, agua: 0, nicotina: 0 };
+    },
   });
+  await showHistory(context, dataSource);
 
   assert.equal(queried, false);
   assert.match(replies[0] ?? "", /conversa privada/);
@@ -132,21 +149,34 @@ test("history from a group is rejected before looking up records", async () => {
 test("private history is queried for the requesting Telegram user only", async () => {
   const { context, replies } = makeHistoryContext();
   let requestedUserId: string | undefined;
-  await showHistory(context, async (telegramUserId) => {
-    requestedUserId = telegramUserId;
-    return [];
+  const dataSource = makeHistoryDataSource({
+    findHistory: async (telegramUserId) => {
+      requestedUserId = telegramUserId;
+      return [];
+    },
+    getDailyTotals: async (telegramUserId) => {
+      assert.equal(telegramUserId, "123456");
+      return { cafeina: 80, agua: 250, nicotina: 1 };
+    },
   });
+  await showHistory(context, dataSource);
 
   assert.equal(requestedUserId, "123456");
+  assert.match(replies[0] ?? "", /Cafeína: 80 mg/);
+  assert.match(replies[0] ?? "", /Água: 250 ml/);
+  assert.match(replies[0] ?? "", /Nicotina: 1 unidades/);
   assert.match(replies[0] ?? "", /Ainda nao ha registros/);
 });
 
 test("history lookup errors return a generic message without exposing details", async (t) => {
   const { context, replies } = makeHistoryContext();
   t.mock.method(console, "error", () => {});
-  await showHistory(context, async () => {
-    throw new Error("sensitive database path");
+  const dataSource = makeHistoryDataSource({
+    getDailyTotals: async () => {
+      throw new Error("sensitive database path");
+    },
   });
+  await showHistory(context, dataSource);
 
   assert.match(replies[0] ?? "", /Nao consegui consultar seu historico/);
   assert.doesNotMatch(replies[0] ?? "", /sensitive database path/);
@@ -154,16 +184,28 @@ test("history lookup errors return a generic message without exposing details", 
 
 test("missing Telegram identity data is rejected before history lookup", async () => {
   const noChat = makeHistoryContext({ chat: undefined });
+  const noUser = makeHistoryContext({ from: undefined });
+  let queried = false;
+  const dataSource = makeHistoryDataSource({
+    findHistory: async () => {
+      queried = true;
+      return [];
+    },
+    getDailyTotals: async () => {
+      queried = true;
+      return { cafeina: 0, agua: 0, nicotina: 0 };
+    },
+  });
   await assert.rejects(
-    showHistory(noChat.context, async () => []),
+    showHistory(noChat.context, dataSource),
     /Telegram chat is missing/,
   );
 
-  const noUser = makeHistoryContext({ from: undefined });
   await assert.rejects(
-    showHistory(noUser.context, async () => []),
+    showHistory(noUser.context, dataSource),
     /Telegram user ID is missing/,
   );
+  assert.equal(queried, false);
   assert.deepEqual(noChat.replies, []);
   assert.deepEqual(noUser.replies, []);
 });
